@@ -1,8 +1,39 @@
 ---
-// Aquí definimos la fecha objetivo en el frontmatter de Astro
-const BODA_INFO = {
-  fechaCuentaRegresiva: "2026-12-31T23:59:59" // <-- CAMBIA ESTO POR TU FECHA
+// 1. FECHA OBJETIVO (El Gran Día)
+const CONFIG_FECHA = {
+  anio: "2026",
+  mes: "7",
+  dia: "26",
+  hora: "18",
+  minutos: "0",
+  segundos: "0"
 };
+
+// 2. FECHA DE INICIO (Desde cuándo empezó a contar la barra)
+const CONFIG_INICIO = {
+  anio: "2026",
+  mes: "7",
+  dia: "21",
+  hora: "17",
+  minutos: "44",
+  segundos: "0"
+};
+
+// Formateo automático de Fecha Objetivo
+const mesPad = String(CONFIG_FECHA.mes).padStart(2, '0');
+const diaPad = String(CONFIG_FECHA.dia).padStart(2, '0');
+const horaPad = String(CONFIG_FECHA.hora).padStart(2, '0');
+const minPad = String(CONFIG_FECHA.minutos).padStart(2, '0');
+const segPad = String(CONFIG_FECHA.segundos).padStart(2, '0');
+const fechaFormateada = `${CONFIG_FECHA.anio}-${mesPad}-${diaPad}T${horaPad}:${minPad}:${segPad}`;
+
+// Formateo automático de Fecha Inicio
+const mesIni = String(CONFIG_INICIO.mes).padStart(2, '0');
+const diaIni = String(CONFIG_INICIO.dia).padStart(2, '0');
+const horaIni = String(CONFIG_INICIO.hora).padStart(2, '0');
+const minIni = String(CONFIG_INICIO.minutos).padStart(2, '0');
+const segIni = String(CONFIG_INICIO.segundos).padStart(2, '0');
+const fechaInicioFormateada = `${CONFIG_INICIO.anio}-${mesIni}-${diaIni}T${horaIni}:${minIni}:${segIni}`;
 ---
 
 <html lang="es">
@@ -45,134 +76,83 @@ const BODA_INFO = {
         </div>
 
         <div class="contenedor-barra">
-          <div class="barra-verde"></div>
+          <div class="barra-verde" id="barra-progreso"></div>
         </div>
-        <div class="texto-porcentaje">LOADING...</div>
+        <div class="texto-porcentaje" id="texto-progreso">0%</div>
 
       </div>
     </div>
 
-    <script define:vars={{ fechaMagica: BODA_INFO.fechaCuentaRegresiva }}>
-  const targetTime = new Date(fechaMagica).getTime();
-  const container = document.getElementById('countdown');
+    <script define:vars={{ fechaMagica: fechaFormateada, fechaInicio: fechaInicioFormateada }}>
+      const targetTime = new Date(fechaMagica).getTime();
+      const startTime = new Date(fechaInicio).getTime();
+      
+      const container = document.getElementById('countdown');
+      const barraProgreso = document.getElementById('barra-progreso');
+      const textoProgreso = document.getElementById('texto-progreso');
 
-  if (container) {
-    setInterval(() => {
-      const now = Date.now();
-      const d = targetTime - now;
-      if (d < 0) return;
+      if (container) {
+        setInterval(() => {
+          const now = Date.now();
+          const d = targetTime - now;
 
-      const days = Math.floor(d / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((d / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((d / (1000 * 60)) % 60);
-      const seconds = Math.floor((d / 1000) % 60);
+          if (d < 0) {
+            if (barraProgreso) barraProgreso.style.width = '100%';
+            if (textoProgreso) textoProgreso.textContent = '100%';
+            return;
+          }
 
-      // Buscamos los elementos primero
-      const spanDays = container.querySelector('[data-unit="days"]');
-      const spanHours = container.querySelector('[data-unit="hours"]');
-      const spanMins = container.querySelector('[data-unit="minutes"]');
-      const spanSecs = container.querySelector('[data-unit="seconds"]');
+          // 1. Cálculos del reloj
+          const days = Math.floor(d / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((d / (1000 * 60 * 60)) % 24);
+          const minutes = Math.floor((d / (1000 * 60)) % 60);
+          const seconds = Math.floor((d / 1000) % 60);
 
-      // Solo actualizamos el texto si el elemento fue encontrado
-      if (spanDays) spanDays.textContent = days.toString().padStart(2, '0');
-      if (spanHours) spanHours.textContent = hours.toString().padStart(2, '0');
-      if (spanMins) spanMins.textContent = minutes.toString().padStart(2, '0');
-      if (spanSecs) spanSecs.textContent = seconds.toString().padStart(2, '0');
-    }, 1000);
-  }
-</script>
+          const spanDays = container.querySelector('[data-unit="days"]');
+          const spanHours = container.querySelector('[data-unit="hours"]');
+          const spanMins = container.querySelector('[data-unit="minutes"]');
+          const spanSecs = container.querySelector('[data-unit="seconds"]');
+
+          if (spanDays) spanDays.textContent = days.toString().padStart(2, '0');
+          if (spanHours) spanHours.textContent = hours.toString().padStart(2, '0');
+          if (spanMins) spanMins.textContent = minutes.toString().padStart(2, '0');
+          if (spanSecs) spanSecs.textContent = seconds.toString().padStart(2, '0');
+
+          // 2. Cálculos de la barra de progreso (Invertida)
+          const duracionTotal = targetTime - startTime;
+          const tiempoRestante = targetTime - now;
+          
+          // Ahora calculamos el porcentaje en base al tiempo que FALTA
+          let porcentaje = (tiempoRestante / duracionTotal) * 100;
+          
+          // Limitamos el porcentaje para que no baje de 0 ni pase de 100
+          if (porcentaje < 0) porcentaje = 0;
+          if (porcentaje > 100) porcentaje = 100;
+
+          // Actualizamos el ancho de la barra y el texto numérico
+          if (barraProgreso) barraProgreso.style.width = `${porcentaje}%`;
+          if (textoProgreso) textoProgreso.textContent = `${Math.floor(porcentaje)}%`;
+
+        }, 1000);
+      }
+    </script>
 
     <style>
-      /* Estilos globales */
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: #0a0a0a; /* Fondo oscuro */
-        color: #f0f0f0;
-        font-family: 'VT323', monospace; /* Fuente digital */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-      }
-
-      /* Borde exterior gris sutil de la imagen */
-      .marco-exterior {
-        border: 2px solid #333;
-        padding: 4px;
-        width: 90%;
-        max-width: 800px;
-      }
-
-      .contenedor-principal {
-        border: 1px solid #444;
-        padding: 3rem;
-        text-align: center;
-        background-color: #050505;
-      }
-
-      h1 {
-        font-size: 4rem;
-        margin: 0;
-        letter-spacing: 4px;
-        font-weight: normal;
-      }
-
-      .subtitulo {
-        color: #7bb5e3; /* Color celeste de la imagen */
-        font-size: 1.5rem;
-        margin-top: 0.2rem;
-        margin-bottom: 4rem;
-        letter-spacing: 2px;
-      }
-
-      /* Estilos del Reloj */
-      .reloj-digital {
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        font-size: 6rem; /* Tamaño grande para los números */
-        margin-bottom: 3rem;
-      }
-
-      .bloque-tiempo {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        line-height: 0.8;
-      }
-
-      .etiqueta {
-        font-size: 1.2rem;
-        color: #666;
-        margin-top: 1rem;
-        letter-spacing: 2px;
-      }
-
-      .separador {
-        margin: 0 1rem;
-        position: relative;
-        top: -10px;
-      }
-
-      /* Barra de Progreso */
-      .contenedor-barra {
-        width: 100%;
-        height: 45px;
-        background-color: #6c7576; /* Gris de la parte vacía */
-        margin-bottom: 0.5rem;
-      }
-
-      .barra-verde {
-        height: 100%;
-        width: 47%; /* Representación fija para emular la imagen */
-        background-color: #65a11c; /* Verde del progreso */
-      }
-
-      .texto-porcentaje {
-        color: #7bb5e3;
-        font-size: 1.2rem;
-      }
+      body { margin: 0; padding: 0; background-color: #0a0a0a; color: #f0f0f0; font-family: 'VT323', monospace; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+      .marco-exterior { border: 2px solid #333; padding: 4px; width: 90%; max-width: 800px; }
+      .contenedor-principal { border: 1px solid #444; padding: 3rem; text-align: center; background-color: #050505; }
+      h1 { font-size: 4rem; margin: 0; letter-spacing: 4px; font-weight: normal; }
+      .subtitulo { color: #7bb5e3; font-size: 1.5rem; margin-top: 0.2rem; margin-bottom: 4rem; letter-spacing: 2px; }
+      .reloj-digital { display: flex; justify-content: center; align-items: flex-start; font-size: 6rem; margin-bottom: 3rem; }
+      .bloque-tiempo { display: flex; flex-direction: column; align-items: center; line-height: 0.8; }
+      .etiqueta { font-size: 1.2rem; color: #666; margin-top: 1rem; letter-spacing: 2px; }
+      .separador { margin: 0 1rem; position: relative; top: -10px; }
+      .contenedor-barra { width: 100%; height: 45px; background-color: #6c7576; margin-bottom: 0.5rem; }
+      
+      /* La barra verde ahora arranca en 0 y el script la controla */
+      .barra-verde { height: 100%; width: 0%; background-color: #65a11c; transition: width 1s linear; }
+      
+      .texto-porcentaje { color: #7bb5e3; font-size: 1.2rem; }
     </style>
   </body>
 </html>

@@ -53,27 +53,34 @@ const BODA_INFO = {
     </div>
 
     <script define:vars={{ fechaMagica: BODA_INFO.fechaCuentaRegresiva }}>
-      const targetTime = new Date(fechaMagica).getTime();
-      const container = document.getElementById('countdown');
+  const targetTime = new Date(fechaMagica).getTime();
+  const container = document.getElementById('countdown');
 
-      if (container) {
-        setInterval(() => {
-          const now = Date.now();
-          const d = targetTime - now;
-          if (d < 0) return;
+  if (container) {
+    setInterval(() => {
+      const now = Date.now();
+      const d = targetTime - now;
+      if (d < 0) return;
 
-          const days = Math.floor(d / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((d / (1000 * 60 * 60)) % 24);
-          const minutes = Math.floor((d / (1000 * 60)) % 60);
-          const seconds = Math.floor((d / 1000) % 60);
+      const days = Math.floor(d / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((d / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((d / (1000 * 60)) % 60);
+      const seconds = Math.floor((d / 1000) % 60);
 
-          container.querySelector('[data-unit="days"]').textContent = days.toString().padStart(2, '0');
-          container.querySelector('[data-unit="hours"]').textContent = hours.toString().padStart(2, '0');
-          container.querySelector('[data-unit="minutes"]').textContent = minutes.toString().padStart(2, '0');
-          container.querySelector('[data-unit="seconds"]').textContent = seconds.toString().padStart(2, '0');
-        }, 1000);
-      }
-    </script>
+      // Buscamos los elementos primero
+      const spanDays = container.querySelector('[data-unit="days"]');
+      const spanHours = container.querySelector('[data-unit="hours"]');
+      const spanMins = container.querySelector('[data-unit="minutes"]');
+      const spanSecs = container.querySelector('[data-unit="seconds"]');
+
+      // Solo actualizamos el texto si el elemento fue encontrado
+      if (spanDays) spanDays.textContent = days.toString().padStart(2, '0');
+      if (spanHours) spanHours.textContent = hours.toString().padStart(2, '0');
+      if (spanMins) spanMins.textContent = minutes.toString().padStart(2, '0');
+      if (spanSecs) spanSecs.textContent = seconds.toString().padStart(2, '0');
+    }, 1000);
+  }
+</script>
 
     <style>
       /* Estilos globales */
